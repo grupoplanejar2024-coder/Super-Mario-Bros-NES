@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -51,6 +51,7 @@
     }
 
     .cover-wrap {
+      position: relative;
       width: 100%;
       max-height: 300px;
       border-radius: 14px;
@@ -69,6 +70,38 @@
       max-height: 300px;
       object-fit: contain;
       display: block;
+    }
+
+    .btn-arrow {
+      width: 38px;
+      height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #fff;
+      background: rgba(15, 18, 28, 0.84);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.12s ease, background 0.15s ease;
+    }
+
+    .btn-arrow:hover {
+      background: rgba(30, 35, 52, 0.96);
+    }
+
+    .btn-arrow:active {
+      transform: scale(0.95);
+    }
+
+    .btn-back-cover {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 5;
     }
 
     .badge {
@@ -152,22 +185,9 @@
 
     .btn-exit {
       position: fixed;
-      top: 12px;
-      left: 12px;
+      top: 10px;
+      left: 10px;
       z-index: 50;
-      padding: 8px 13px;
-      font-size: 0.82rem;
-      font-weight: 600;
-      color: #fff;
-      background: rgba(15, 18, 28, 0.82);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      border-radius: 10px;
-      cursor: pointer;
-    }
-
-    .btn-exit:hover {
-      background: rgba(30, 35, 52, 0.95);
     }
   </style>
 </head>
@@ -175,18 +195,19 @@
   <main class="launcher" id="launcher">
     <section class="card">
       <div class="cover-wrap">
+        <button class="btn-arrow btn-back-cover" id="btn-back-cover" type="button" aria-label="Voltar" title="Voltar">←</button>
         <img src="super mario bros 2.jpeg" alt="Capa de Super Mario Bros. 2 (NES)" />
       </div>
       <span class="badge">Nintendo Entertainment System • NES</span>
       <h1>Super Mario Bros. 2</h1>
-      <p class="subtitle">Toque em jogar para iniciar o emulador no navegador.</p>
+      <p class="subtitle">Toca em jogar para iniciar o emulador no navegador.</p>
       <button class="btn-play" id="btn-start" type="button">▶ Jogar Agora</button>
       <p class="status" id="status-msg"></p>
     </section>
   </main>
 
   <section id="emulator-screen" aria-label="Tela do jogo">
-    <button class="btn-exit" id="btn-exit" type="button">← Capa</button>
+    <button class="btn-arrow btn-exit" id="btn-exit" type="button" aria-label="Voltar à capa" title="Voltar à capa">←</button>
     <div id="game"></div>
   </section>
 
@@ -199,6 +220,7 @@
     const gameContainerEl = document.getElementById("game");
     const btnStart = document.getElementById("btn-start");
     const btnExit = document.getElementById("btn-exit");
+    const btnBackCover = document.getElementById("btn-back-cover");
     const statusMsg = document.getElementById("status-msg");
 
     let emulatorLoaded = false;
@@ -207,15 +229,14 @@
       try {
         const res = await fetch(url, { method: "HEAD", cache: "no-store" });
         if (!res.ok) {
-          return { ok: false, motivo: `Não foi possível acessar a ROM (HTTP ${res.status}).` };
+          return { ok: false, motivo: `Não foi possível aceder à ROM (HTTP ${res.status}).` };
         }
         const len = Number(res.headers.get("content-length") || 0);
         if (res.headers.has("content-length") && len < 1024) {
-          return { ok: false, motivo: "O arquivo da ROM parece vazio ou corrompido (< 1 KB)." };
+          return { ok: false, motivo: "O ficheiro da ROM parece vazio ou corrompido (< 1 KB)." };
         }
         return { ok: true };
       } catch (err) {
-        // Caso o servidor não permita HEAD ou exija GET
         return { ok: true };
       }
     }
@@ -238,7 +259,7 @@
       script.src = "https://cdn.emulatorjs.org/stable/data/loader.js";
       script.async = true;
       script.onerror = () => {
-        statusMsg.textContent = "Falha ao carregar o motor do EmulatorJS. Verifique sua conexão.";
+        statusMsg.textContent = "Falha ao carregar o motor do EmulatorJS. Verifica a tua ligação.";
         statusMsg.classList.add("error");
       };
       document.body.appendChild(script);
@@ -246,13 +267,13 @@
 
     btnStart.addEventListener("click", async () => {
       statusMsg.classList.remove("error");
-      statusMsg.textContent = "Verificando arquivo da ROM...";
+      statusMsg.textContent = "A verificar ficheiro da ROM...";
 
       const romUrl = encodeURI(ROM_FILENAME);
       const check = await verificarRomAcessivel(romUrl);
 
       if (!check.ok) {
-        statusMsg.textContent = `${check.motivo} Confira o nome exato do arquivo .nes na pasta.`;
+        statusMsg.textContent = `${check.motivo} Confere o nome exato do ficheiro .nes na pasta.`;
         statusMsg.classList.add("error");
         return;
       }
@@ -265,8 +286,15 @@
       iniciarEmulatorJS(romUrl);
     });
 
+    btnBackCover.addEventListener("click", () => {
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        statusMsg.textContent = "Já estás na tela inicial do jogo.";
+      }
+    });
+
     btnExit.addEventListener("click", () => {
-      // Recarrega para limpar o contexto de áudio/canvas do emulador com segurança
       window.location.reload();
     });
   </script>
