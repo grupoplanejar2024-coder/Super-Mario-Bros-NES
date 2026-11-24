@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Super Mario Bros. 2 (NES) — Kubo Touch</title>
+  <style>
+    :root {
+      --bg: #0b0d12;
+      --card: #141824;
+      --accent: #e52521;
+      --accent-hover: #ff3b36;
+      --text: #f5f7fa;
+      --muted: #9aa3b2;
+      --border: rgba(255, 255, 255, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at top, #181e2e 0%, var(--bg) 70%);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+    }
+
+    .launcher {
+      min-height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 22px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+      text-align: center;
+    }
+
+    .cover-wrap {
+      width: 100%;
+      max-height: 300px;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #0d1018;
+      border: 1px solid var(--border);
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cover-wrap img {
+      width: 100%;
+      height: 100%;
+      max-height: 300px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #ffd166;
+      background: rgba(255, 209, 102, 0.12);
+      border: 1px solid rgba(255, 209, 102, 0.25);
+      padding: 4px 10px;
+      border-radius: 999px;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      font-size: 1.45rem;
+      line-height: 1.25;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-bottom: 18px;
+    }
+
+    .btn-play {
+      width: 100%;
+      padding: 15px 20px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      background: var(--accent);
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: transform 0.12s ease, background 0.15s ease;
+      box-shadow: 0 10px 24px rgba(229, 37, 33, 0.35);
+    }
+
+    .btn-play:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-play:active {
+      transform: scale(0.98);
+    }
+
+    .status {
+      margin-top: 12px;
+      font-size: 0.82rem;
+      color: var(--muted);
+      min-height: 18px;
+    }
+
+    .status.error {
+      color: #ff6b6b;
+    }
+
+    /* Área do emulador */
+    #emulator-screen {
+      display: none;
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100dvh;
+      background: #000;
+      z-index: 10;
+    }
+
+    #emulator-screen.active {
+      display: block;
+    }
+
+    #game {
+      width: 100%;
+      height: 100%;
+    }
+
+    .btn-exit {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 50;
+      padding: 8px 13px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #fff;
+      background: rgba(15, 18, 28, 0.82);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .btn-exit:hover {
+      background: rgba(30, 35, 52, 0.95);
+    }
+  </style>
+</head>
+<body>
+  <main class="launcher" id="launcher">
+    <section class="card">
+      <div class="cover-wrap">
+        <img src="super mario bros 2.jpeg" alt="Capa de Super Mario Bros. 2 (NES)" />
+      </div>
+      <span class="badge">Nintendo Entertainment System • NES</span>
+      <h1>Super Mario Bros. 2</h1>
+      <p class="subtitle">Toque em jogar para iniciar o emulador no navegador.</p>
+      <button class="btn-play" id="btn-start" type="button">▶ Jogar Agora</button>
+      <p class="status" id="status-msg"></p>
+    </section>
+  </main>
+
+  <section id="emulator-screen" aria-label="Tela do jogo">
+    <button class="btn-exit" id="btn-exit" type="button">← Capa</button>
+    <div id="game"></div>
+  </section>
+
+  <script>
+    const ROM_FILENAME = "Super Mario Bros. 2 (USA) (Rev 1).nes";
+    const COVER_FILENAME = "super mario bros 2.jpeg";
+
+    const launcherEl = document.getElementById("launcher");
+    const emulatorScreenEl = document.getElementById("emulator-screen");
+    const gameContainerEl = document.getElementById("game");
+    const btnStart = document.getElementById("btn-start");
+    const btnExit = document.getElementById("btn-exit");
+    const statusMsg = document.getElementById("status-msg");
+
+    let emulatorLoaded = false;
+
+    async function verificarRomAcessivel(url) {
+      try {
+        const res = await fetch(url, { method: "HEAD", cache: "no-store" });
+        if (!res.ok) {
+          return { ok: false, motivo: `Não foi possível acessar a ROM (HTTP ${res.status}).` };
+        }
+        const len = Number(res.headers.get("content-length") || 0);
+        if (res.headers.has("content-length") && len < 1024) {
+          return { ok: false, motivo: "O arquivo da ROM parece vazio ou corrompido (< 1 KB)." };
+        }
+        return { ok: true };
+      } catch (err) {
+        // Caso o servidor não permita HEAD ou exija GET
+        return { ok: true };
+      }
+    }
+
+    function iniciarEmulatorJS(romUrl) {
+      if (emulatorLoaded) return;
+      emulatorLoaded = true;
+
+      window.EJS_player = "#game";
+      window.EJS_core = "nes";
+      window.EJS_gameName = "Super Mario Bros. 2";
+      window.EJS_gameUrl = romUrl;
+      window.EJS_pathtodata = "https://cdn.emulatorjs.org/stable/data/";
+      window.EJS_startOnLoaded = true;
+      window.EJS_fullscreenOnLoaded = false;
+      window.EJS_virtualGamepad = true;
+      window.EJS_backgroundImage = COVER_FILENAME;
+
+      const script = document.createElement("script");
+      script.src = "https://cdn.emulatorjs.org/stable/data/loader.js";
+      script.async = true;
+      script.onerror = () => {
+        statusMsg.textContent = "Falha ao carregar o motor do EmulatorJS. Verifique sua conexão.";
+        statusMsg.classList.add("error");
+      };
+      document.body.appendChild(script);
+    }
+
+    btnStart.addEventListener("click", async () => {
+      statusMsg.classList.remove("error");
+      statusMsg.textContent = "Verificando arquivo da ROM...";
+
+      const romUrl = encodeURI(ROM_FILENAME);
+      const check = await verificarRomAcessivel(romUrl);
+
+      if (!check.ok) {
+        statusMsg.textContent = `${check.motivo} Confira o nome exato do arquivo .nes na pasta.`;
+        statusMsg.classList.add("error");
+        return;
+      }
+
+      launcherEl.style.display = "none";
+      emulatorScreenEl.classList.add("active");
+      gameContainerEl.style.width = "100%";
+      gameContainerEl.style.height = "100%";
+
+      iniciarEmulatorJS(romUrl);
+    });
+
+    btnExit.addEventListener("click", () => {
+      // Recarrega para limpar o contexto de áudio/canvas do emulador com segurança
+      window.location.reload();
+    });
+  </script>
+</body>
+</html>
